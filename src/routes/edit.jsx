@@ -2,8 +2,12 @@ import { Form, useLoaderData,redirect } from "react-router-dom";
 import { updateContact } from "../contact";
 
 export async function action({ request, params }) {
+  // console.log(request)
     const formData = await request.formData();
+    // console.log(formData)
     const updates = Object.fromEntries(formData);
+    // console.log(updates)
+
     await updateContact(params.contactId, updates);
     return redirect(`/contacts/${params.contactId}`);
   }
