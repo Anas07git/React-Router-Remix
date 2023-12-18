@@ -1,14 +1,27 @@
-import { Form, useLoaderData } from "react-router-dom";
-import { getContact } from "../contact";
+import { Form, useLoaderData,useFetcher } from "react-router-dom";
+import { getContact,updateContact } from "../contact";
 
 export async function loader({ params }) {
   const contact = await getContact(params.contactId);
+  if (!contact) {
+    throw new Response("", {
+      status: 404,
+      statusText: "Not Found",
+    });
+  }
   return { contact };
+}
+export async function action({ request, params }) {
+  let formData = await request.formData();
+  return updateContact(params.contactId, {
+    favorite: formData.get("favorite") === "true",
+  });
 }
 
 export default function Contact() {
     
     const { contact } = useLoaderData();
+    
     console.log(contact)
     // const contact = {
     //     first: "Your",
@@ -20,12 +33,12 @@ export default function Contact() {
     // };
     
     return (
-    <div id="contact">
+      <div id="contact">
       <div>
         <img
           key={contact.avatar}
           src={contact.avatar || null}
-        />
+          />
       </div>
 
       <div>
@@ -36,7 +49,7 @@ export default function Contact() {
             </>
           ) : (
             <i>No Name</i>
-          )}{" "}
+            )}{" "}
           <Favorite contact={contact} />
         </h1>
 
@@ -45,7 +58,7 @@ export default function Contact() {
             <a
               target="_blank"
               href={`https://twitter.com/${contact.twitter}`}
-            >
+              >
               {contact.twitter}
             </a>
           </p>
@@ -64,10 +77,10 @@ export default function Contact() {
               if (
                 !confirm(
                   "Please confirm you want to delete this record."
-                )
-              ) {
-                event.preventDefault();
-              }
+                  )
+                  ) {
+                    event.preventDefault();
+                  }
             }}
           >
             <button type="submit">Delete</button>
@@ -79,10 +92,14 @@ export default function Contact() {
 }
 
 function Favorite({ contact }) {
+  const fetcher = useFetcher();
   // yes, this is a `let` for later
   let favorite = contact.favorite;
+  if (fetcher.formData) {
+    favorite = fetcher.formData.get("favorite") === "true";
+  }
   return (
-    <Form method="post">
+    <fetcher.Form method="post">
       <button
         name="favorite"
         value={favorite ? "false" : "true"}
@@ -94,6 +111,6 @@ function Favorite({ contact }) {
       >
         {favorite ? "★" : "☆"}
       </button>
-    </Form>
+    </fetcher.Form>
   );
 }
